@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+
+	<Symbols>
+		<GuidSymbol name="guidProjectToTextForAIPackage" value="{5331fdc3-e405-482c-9923-d660640a188d}" />
+		<GuidSymbol name="guidGenerateAiContextCommandSet" value="{a1b2c3d4-e5f6-4789-0a1b-2c3d4e5f6a7b}">
+			<IDSymbol name="GenerateAiContextCommandId" value="0x0100" />
+		</GuidSymbol>
+		<GuidSymbol name="guidSHLMainMenu" value="{D309F791-903F-11D0-9EFC-00A0C911004F}">
+			<IDSymbol name="IDG_VS_CTXT_PROJECT_ADD" value="0x0601" />
+		</GuidSymbol>
+	</Symbols>
+
+	<Commands>
+		<Buttons>
+			<Button guid="guidGenerateAiContextCommandSet" id="GenerateAiContextCommandId" priority="0x0100" type="Button">
+				<Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_PROJECT_ADD" />
+				<Strings>
+					<ButtonText>Сгенерировать AI-контекст...</ButtonText>
+				</Strings>
+			</Button>
+		</Buttons>
+	</Commands>
+
+</CommandTable>
