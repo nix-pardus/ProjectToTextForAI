@@ -81,7 +81,8 @@ namespace ProjectToTextForAI
             allFiles = allFiles.Distinct().ToList();
 
             string output = AiContextGenerator.FormatFilesAsContextStatic(allFiles, solutionRoot);
-            File.WriteAllText(outputPath, output, Encoding.UTF8);
+            var utf8WithBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+            File.WriteAllText(outputPath, output, utf8WithBom);
         }
     }
 }

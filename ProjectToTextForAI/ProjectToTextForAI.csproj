@@ -81,6 +81,9 @@
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.4</Version>
     </PackageReference>
+    <PackageReference Include="System.Text.Encoding.CodePages">
+      <Version>10.0.13</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

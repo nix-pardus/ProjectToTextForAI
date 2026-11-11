@@ -21,6 +21,11 @@ namespace ProjectToTextForAI
     {
         private object _site;
 
+        static AiContextGenerator()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
+
         public int DefaultExtension(out string pbstrDefaultExtension)
         {
             pbstrDefaultExtension = ".ai.txt";
@@ -72,7 +77,8 @@ namespace ProjectToTextForAI
                 string output = FormatFilesAsContext(allFiles, solutionRoot);
 
                 // Возврат полного содержимого для перезаписи файла
-                byte[] bytes = Encoding.UTF8.GetBytes(output);
+                var utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+                byte[] bytes = utf8.GetBytes(output);
                 rgbOutputFileContents[0] = Marshal.AllocCoTaskMem(bytes.Length);
                 Marshal.Copy(bytes, 0, rgbOutputFileContents[0], bytes.Length);
                 pcbOutput = (uint)bytes.Length;
@@ -128,6 +134,43 @@ namespace ProjectToTextForAI
             return Path.GetDirectoryName(dte.Solution.FullName);
         }
 
+        private static string ReadFileWithEncodingDetection(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+
+            // 1) BOM-детект
+            if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+                return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+
+            if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+                return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2); // UTF-16 LE
+
+            if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
+                return Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2); // UTF-16 BE
+
+            // 2) эвристика: UTF-16 без BOM — много нулевых байтов в первой сотне
+            int sample = Math.Min(bytes.Length, 200);
+            int nulls = 0;
+            for (int i = 1; i < sample; i += 2)
+                if (bytes[i] == 0x00) nulls++;
+
+            if (sample / 2 > 0 && nulls > sample / 4)
+                return Encoding.Unicode.GetString(bytes); // почти наверняка UTF-16 LE без BOM
+
+            // 3) строгий UTF-8
+            try
+            {
+                var strictUtf8 = new UTF8Encoding(false, throwOnInvalidBytes: true);
+                return strictUtf8.GetString(bytes);
+            }
+            catch (DecoderFallbackException)
+            {
+                // 4) не UTF-8 — пробуем Windows-1251 (типично для русских исходников)
+                try { return Encoding.GetEncoding(1251).GetString(bytes); }
+                catch { return Encoding.UTF8.GetString(bytes); } // последний fallback
+            }
+        }
+
         // Методы форматирования (без изменений, кроме добавления информации о проекте)
         private static string FormatFilesAsContext(List<string> files, string rootPath)
         {
@@ -153,7 +196,7 @@ namespace ProjectToTextForAI
                     sb.AppendLine(new string('=', 60));
                     try
                     {
-                        string content = File.ReadAllText(file, Encoding.UTF8);
+                        string content = ReadFileWithEncodingDetection(file);
                         sb.AppendLine(content);
                     }
                     catch (Exception ex)
